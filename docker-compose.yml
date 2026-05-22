@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Backend Node.js
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: youtube_clone_backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - CLIENT_URL=${CLIENT_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+    restart: unless-stopped
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: youtube_clone_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+# Có thể sử dụng MongoDB trên MongoDB Atlas, nên không cấu hình mongodb service ở đây.
+# Nếu muốn chạy offline cục bộ, có thể bỏ comment block dưới đây và update MONGODB_URI=mongodb://mongodb:27017/youtube_clone
+#  mongodb:
+#    image: mongo:latest
+#    container_name: youtube_clone_db
+#    ports:
+#      - "27017:27017"
+#    volumes:
+#      - mongodb_data:/data/db
+#    restart: unless-stopped
+#
+#volumes:
+#  mongodb_data:
