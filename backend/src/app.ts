@@ -9,6 +9,12 @@ import authRoutes from './routes/auth.routes';
 import videoRoutes from './routes/video.routes';
 import commentRoutes from './routes/comment.routes';
 import userRoutes from './routes/user.routes';
+import playlistRoutes from './routes/playlist.routes';
+import notificationRoutes from './routes/notification.routes';
+import studioRoutes from './routes/studio.routes';
+import adminRoutes from './routes/admin.routes';
+import { createServer } from 'http';
+import { initSocket } from './socket';
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +26,7 @@ import './config/passport'; // Import passport config
 import passport from 'passport';
 
 const app = express();
+const httpServer = createServer(app);
 
 // Middleware
 app.use(express.json());
@@ -43,11 +50,18 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/playlists', playlistRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/studio', studioRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Port configuration
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// Initialize Socket.io
+initSocket(httpServer);
+
+httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 

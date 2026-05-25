@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import Video from '../models/video.model';
+import User from '../models/user.model';
 import cloudinary from '../config/cloudinary';
 
 // @desc    Upload a new video
@@ -27,7 +28,11 @@ export const uploadVideo = async (req: Request, res: Response): Promise<void> =>
         {
           resource_type: 'video',
           folder: 'youtube_clone/videos',
-          chunk_size: 6000000 // Gửi từng chunk 6MB
+          chunk_size: 6000000, // Gửi từng chunk 6MB
+          eager: [
+            { streaming_profile: 'hd', format: 'm3u8' }
+          ],
+          eager_async: false // Đợi xử lý xong để lấy URL luôn (phù hợp video ngắn)
         },
         (error, result) => {
           if (error) reject(error);
@@ -55,6 +60,7 @@ export const uploadVideo = async (req: Request, res: Response): Promise<void> =>
       visibility,
       isShort: isShort === 'true',
       videoUrl: videoUploadResult.secure_url,
+      hlsUrl: videoUploadResult.eager && videoUploadResult.eager.length > 0 ? videoUploadResult.eager[0].secure_url : undefined,
       thumbnailUrl: thumbnailUploadResult.secure_url,
       duration: videoUploadResult.duration || 0,
       owner: (req as any).user._id,
@@ -256,6 +262,48 @@ export const getRelatedVideos = async (req: Request, res: Response): Promise<voi
     }
 
     res.json(relatedVideos);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get videos from subscribed channels
+// @route   GET /api/videos/subscriptions
+// @access  Private
+export const getSubscribedVideos = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user._id;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 12;
+    const skip = (page - 1) * limit;
+
+    const videos = await Video.find({
+      owner: { $in: user.subscribedChannels as any[] },
+      visibility: 'public'
+    })
+      .populate('owner', 'username avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Video.countDocuments({
+      owner: { $in: user.subscribedChannels as any[] },
+      visibility: 'public'
+    });
+
+    res.json({
+      videos,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalVideos: total,
+    });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

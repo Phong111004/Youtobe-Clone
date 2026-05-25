@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model';
+import User, { IUser } from '../models/user.model';
+
+export interface AuthRequest extends Request {
+  user?: IUser;
+}
 
 export const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   let token;
@@ -27,5 +31,30 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
     }
   } else {
     res.status(401).json({ message: 'Not authorized, no token' });
+  }
+};
+
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const token = req.cookies.jwt;
+  if (token) {
+    try {
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+      const user = await User.findById(decoded.id).select('-password');
+      if (user) {
+        (req as any).user = user;
+      }
+    } catch (error) {
+      // Ignored
+    }
+  }
+  next();
+};
+
+export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  const user = (req as any).user;
+  if (user && user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized as an admin' });
   }
 };

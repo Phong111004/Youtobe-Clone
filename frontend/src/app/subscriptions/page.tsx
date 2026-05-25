@@ -6,15 +6,14 @@ import VideoCard from '@/components/common/VideoCard';
 import VideoSkeleton from '@/components/common/VideoSkeleton';
 import { useInView } from 'react-intersection-observer';
 import { useEffect } from 'react';
+import React from 'react';
+import { PlaySquare } from 'lucide-react';
 
-// Categories để lọc (giống UI Youtube)
-const categories = ['Tất cả', 'Âm nhạc', 'Trò chơi', 'Danh sách kết hợp', 'Trực tiếp', 'Hoạt họa', 'Mới tải lên gần đây', 'Đề xuất mới'];
-
-export default function Home() {
+export default function SubscriptionsPage() {
   const { ref, inView } = useInView();
 
   const fetchVideos = async ({ pageParam = 1 }) => {
-    const res = await api.get(`/videos?page=${pageParam}&limit=12&isShort=false`);
+    const res = await api.get(`/videos/subscriptions?page=${pageParam}&limit=12`);
     return res.data;
   };
 
@@ -23,11 +22,10 @@ export default function Home() {
     error,
     fetchNextPage,
     hasNextPage,
-    isFetching,
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ['videos'],
+    queryKey: ['subscribed_videos'],
     queryFn: fetchVideos,
     getNextPageParam: (lastPage) => {
       if (lastPage.currentPage < lastPage.totalPages) {
@@ -45,21 +43,16 @@ export default function Home() {
   }, [inView, fetchNextPage, hasNextPage]);
 
   return (
-    <div className="px-4 pb-10">
-      {/* Categories Bar */}
-      <div className="sticky top-14 bg-[#0f0f0f] z-30 py-3 mb-4 -mx-4 px-4 overflow-x-auto custom-scrollbar flex gap-3">
-        {categories.map((cat, idx) => (
-          <button
-            key={cat}
-            className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              idx === 0
-                ? 'bg-white text-black hover:bg-neutral-200'
-                : 'bg-[#212121] text-white hover:bg-neutral-700'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+    <div className="px-4 md:px-8 lg:px-16 pb-10 max-w-[1600px] mx-auto mt-4">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8 bg-[#121212] p-6 rounded-2xl border border-neutral-800">
+        <div className="w-16 h-16 bg-red-600/10 rounded-full flex items-center justify-center shrink-0">
+          <PlaySquare className="w-8 h-8 text-red-500" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold">Kênh đăng ký</h1>
+          <p className="text-neutral-400 mt-1">Video mới nhất từ các kênh bạn yêu thích</p>
+        </div>
       </div>
 
       {/* Video Grid */}
@@ -70,8 +63,22 @@ export default function Home() {
           ))}
         </div>
       ) : status === 'error' ? (
-        <div className="text-center py-20 text-red-500">
-          <p>Đã xảy ra lỗi khi tải video: {(error as any).message}</p>
+        <div className="text-center py-20 text-neutral-400">
+          {(error as any)?.response?.status === 401 ? (
+            <>
+              <PlaySquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <h2 className="text-xl font-medium mb-2">Đừng bỏ lỡ video mới</h2>
+              <p>Đăng nhập để xem nội dung cập nhật từ các kênh YouTube yêu thích của bạn</p>
+            </>
+          ) : (
+            <p className="text-red-500">Đã xảy ra lỗi khi tải video: {(error as any)?.response?.data?.message || (error as any).message}</p>
+          )}
+        </div>
+      ) : data?.pages[0].videos.length === 0 ? (
+        <div className="text-center py-20 text-neutral-400">
+          <PlaySquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <h2 className="text-xl font-medium mb-2">Bạn chưa đăng ký kênh nào</h2>
+          <p>Hãy tìm và đăng ký các kênh yêu thích để xem video mới tại đây.</p>
         </div>
       ) : (
         <>
@@ -94,4 +101,3 @@ export default function Home() {
     </div>
   );
 }
-import React from 'react';

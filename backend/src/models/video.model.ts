@@ -4,6 +4,7 @@ export interface IVideo extends Document {
   title: string;
   description: string;
   videoUrl: string;
+  hlsUrl?: string;
   thumbnailUrl: string;
   duration: number;
   views: number;
@@ -21,6 +22,7 @@ const videoSchema = new Schema<IVideo>(
     title: { type: String, required: true, trim: true, index: true },
     description: { type: String, default: '', trim: true },
     videoUrl: { type: String, required: true },
+    hlsUrl: { type: String },
     thumbnailUrl: { type: String, required: true },
     duration: { type: Number, default: 0 },
     views: { type: Number, default: 0, index: true },
