@@ -198,7 +198,7 @@ export default function WatchPage() {
       {/* Left Column (Main Video + Details) */}
       <div className="flex-1 lg:max-w-[70%]">
         <div className="rounded-xl overflow-hidden shadow-2xl bg-black">
-          <CustomVideoPlayer url={video.videoUrl} />
+          <CustomVideoPlayer url={video.hlsUrl || video.videoUrl} />
         </div>
         
         <h1 className="text-xl font-bold mt-4 line-clamp-2">{video.title}</h1>

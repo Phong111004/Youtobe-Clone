@@ -161,7 +161,7 @@ export default function StudioContentPage() {
 
                     {/* Column 4: Date */}
                     <div className="flex flex-col">
-                      <span>{format(new Date(video.createdAt), 'd thg M, yyyy', { locale: vi })}</span>
+                      <span>{format(new Date(video.createdAt), "d 'thg' M, yyyy", { locale: vi })}</span>
                       <span className="text-xs text-neutral-400">Đã xuất bản</span>
                     </div>
 

@@ -7,6 +7,7 @@ import Sidebar from './Sidebar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import ReactQueryProvider from '../common/ReactQueryProvider';
+import { SocketProvider } from '@/context/SocketContext';
 import clsx from 'clsx';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -31,28 +32,32 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   if (isNoLayout || isStudioPage) {
     return (
       <ReactQueryProvider>
-        {children}
+        <SocketProvider>
+          {children}
+        </SocketProvider>
       </ReactQueryProvider>
     );
   }
 
   return (
     <ReactQueryProvider>
-      <div className="min-h-screen bg-[#0f0f0f] text-white">
-        <Navbar />
-        <div className="flex pt-14">
-          {!isWatchPage && <Sidebar />}
-          <main
-            className={clsx(
-              'flex-1 w-full transition-all duration-200',
-              !isWatchPage && isOpen ? 'ml-60' : '',
-              !isWatchPage && !isOpen ? 'ml-[72px]' : ''
-            )}
-          >
-            {children}
-          </main>
+      <SocketProvider>
+        <div className="min-h-screen bg-[#0f0f0f] text-white">
+          <Navbar />
+          <div className="flex pt-14">
+            {!isWatchPage && <Sidebar />}
+            <main
+              className={clsx(
+                'flex-1 w-full transition-all duration-200',
+                !isWatchPage && isOpen ? 'ml-60' : '',
+                !isWatchPage && !isOpen ? 'ml-[72px]' : ''
+              )}
+            >
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      </SocketProvider>
     </ReactQueryProvider>
   );
 }

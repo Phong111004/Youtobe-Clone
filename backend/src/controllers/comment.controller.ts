@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import Comment from '../models/comment.model';
 import Video from '../models/video.model';
+import Notification from '../models/notification.model';
+import { emitToUser } from '../socket';
 
 // @desc    Get comments for a video (chỉ lấy comment gốc, không lấy replies)
 // @route   GET /api/comments/:videoId
@@ -72,6 +74,51 @@ export const addComment = async (req: Request, res: Response): Promise<void> => 
 
     // Populate owner để trả về luôn cho frontend cập nhật UI
     const populatedComment = await Comment.findById(newComment._id).populate('owner', 'username avatar');
+
+    // --- NOTIFICATION LOGIC ---
+    try {
+      if (parentId) {
+        // Nếu là reply, gửi thông báo cho chủ của comment gốc
+        const parentComment = await Comment.findById(parentId);
+        if (parentComment && parentComment.owner.toString() !== userId.toString()) {
+          const notification = new Notification({
+            recipient: parentComment.owner.toString(),
+            sender: userId,
+            type: 'NEW_COMMENT',
+            video: videoId,
+            comment: newComment._id,
+            message: 'đã trả lời bình luận của bạn.',
+          });
+          await notification.save();
+          const populatedNotification = await Notification.findById(notification._id)
+            .populate('sender', 'username avatar')
+            .populate('video', 'title')
+            .populate('comment', 'content');
+          emitToUser(parentComment.owner.toString(), 'new_notification', populatedNotification);
+        }
+      } else {
+        // Nếu là comment gốc, gửi thông báo cho chủ video
+        if (video.owner.toString() !== userId.toString()) {
+          const notification = new Notification({
+            recipient: video.owner.toString(),
+            sender: userId,
+            type: 'NEW_COMMENT',
+            video: videoId,
+            comment: newComment._id,
+            message: 'đã bình luận về video của bạn.',
+          });
+          await notification.save();
+          const populatedNotification = await Notification.findById(notification._id)
+            .populate('sender', 'username avatar')
+            .populate('video', 'title')
+            .populate('comment', 'content');
+          emitToUser(video.owner.toString(), 'new_notification', populatedNotification);
+        }
+      }
+    } catch (notifErr) {
+      console.error('Lỗi khi tạo thông báo:', notifErr);
+    }
+    // --- END NOTIFICATION LOGIC ---
 
     res.status(201).json(populatedComment);
   } catch (error: any) {

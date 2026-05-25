@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Hls from 'hls.js';
 
 interface CustomPlayerProps {
   url: string;
@@ -137,6 +138,37 @@ export default function CustomVideoPlayer({ url }: CustomPlayerProps) {
     }
   }, []);
 
+  // HLS Setup
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let hls: Hls | null = null;
+
+    if (url.includes('.m3u8') && Hls.isSupported()) {
+      hls = new Hls({
+        maxMaxBufferLength: 30, // Tối ưu hóa buffer
+      });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('HLS Manifest loaded');
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Dành cho Safari hỗ trợ native HLS
+      video.src = url;
+    } else {
+      // Fallback MP4
+      video.src = url;
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [url]);
+
   return (
     <div 
       ref={containerRef}
@@ -147,7 +179,6 @@ export default function CustomVideoPlayer({ url }: CustomPlayerProps) {
       <div className="absolute inset-0 z-10" onClick={togglePlay}></div>
       <video
         ref={videoRef}
-        src={url}
         className="w-full h-full object-contain"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}

@@ -1,5 +1,5 @@
 import express from 'express';
-import { uploadVideo, getVideos, getVideoById, likeVideo, dislikeVideo, getTrendingVideos, getRelatedVideos } from '../controllers/video.controller';
+import { uploadVideo, getVideos, getVideoById, likeVideo, dislikeVideo, getTrendingVideos, getRelatedVideos, getSubscribedVideos } from '../controllers/video.controller';
 import { protect } from '../middlewares/auth.middleware';
 import { upload } from '../middlewares/upload.middleware';
 
@@ -10,6 +10,9 @@ router.get('/', getVideos);
 
 // GET /api/videos/trending - Lấy video thịnh hành (Public)
 router.get('/trending', getTrendingVideos);
+
+// GET /api/videos/subscriptions - Lấy video từ kênh đăng ký (Private)
+router.get('/subscriptions', protect, getSubscribedVideos);
 
 // GET /api/videos/:id - Lấy chi tiết video (Public)
 router.get('/:id', getVideoById);

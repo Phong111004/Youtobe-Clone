@@ -24,7 +24,16 @@ export default function ShortsPlayer({ video, isActive }: ShortsPlayerProps) {
 
   // Tự động play/pause dựa vào view hiện tại
   useEffect(() => {
-    setPlaying(isActive);
+    let timeout: NodeJS.Timeout;
+    if (isActive) {
+      // Delay play slightly to avoid DOMException: The play() request was interrupted by a call to pause()
+      timeout = setTimeout(() => {
+        setPlaying(true);
+      }, 150);
+    } else {
+      setPlaying(false);
+    }
+    return () => clearTimeout(timeout);
   }, [isActive]);
 
   const togglePlay = () => setPlaying(!playing);

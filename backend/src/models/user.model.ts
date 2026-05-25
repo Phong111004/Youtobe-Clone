@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   username: string;
   email: string;
+  role: 'user' | 'admin';
   password?: string;
   googleId?: string;
   avatar: string;
@@ -20,6 +21,7 @@ const userSchema = new Schema<IUser>(
   {
     username: { type: String, required: true, unique: true, trim: true, index: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
     password: { 
       type: String, 
       required: function() { return !this.googleId; } // Bắt buộc nếu không login bằng Google

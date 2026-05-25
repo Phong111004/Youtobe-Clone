@@ -3,15 +3,28 @@
 import { Menu, Search, Mic, Upload, Bell, UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import NotificationDropdown from '../common/NotificationDropdown';
 
 export default function Navbar() {
   const toggleSidebar = useSidebarStore((state) => state.toggleSidebar);
   const { user, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,19 +84,19 @@ export default function Navbar() {
         <Link href="/upload" className="p-2 hover:bg-neutral-800 rounded-full transition-colors hidden sm:block">
           <Upload className="w-6 h-6 text-white" />
         </Link>
-        <button className="p-2 hover:bg-neutral-800 rounded-full transition-colors hidden sm:block relative">
-          <Bell className="w-6 h-6 text-white" />
-        </button>
         
         {user ? (
-          <div className="relative group cursor-pointer ml-2">
+          <>
+            <NotificationDropdown />
+            <div ref={profileRef} className="relative cursor-pointer ml-2">
             <img
               src={user.avatar}
               alt="Avatar"
               className="w-8 h-8 rounded-full object-cover"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
             />
-            {/* Dropdown Menu (Hover to open) */}
-            <div className="absolute right-0 mt-2 w-48 bg-[#282828] rounded-lg shadow-xl py-2 hidden group-hover:block border border-neutral-700">
+            {/* Dropdown Menu (Click to open) */}
+            <div className={`absolute right-0 mt-2 w-48 bg-[#282828] rounded-lg shadow-xl py-2 border border-neutral-700 ${isProfileOpen ? 'block' : 'hidden'}`}>
               <div className="px-4 py-2 border-b border-neutral-700 mb-2">
                 <p className="font-medium text-white">{user.username}</p>
                 <p className="text-sm text-neutral-400 truncate">{user.email}</p>
@@ -95,6 +108,7 @@ export default function Navbar() {
               </button>
             </div>
           </div>
+          </>
         ) : (
           <Link
             href="/login"
