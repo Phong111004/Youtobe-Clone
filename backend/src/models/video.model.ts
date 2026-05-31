@@ -15,6 +15,7 @@ export interface IVideo extends Document {
   tags: string[];
   visibility: 'public' | 'private' | 'unlisted';
   isShort: boolean;
+  subtitles?: { language: string; url: string; label: string }[];
 }
 
 const videoSchema = new Schema<IVideo>(
@@ -33,6 +34,13 @@ const videoSchema = new Schema<IVideo>(
     tags: [{ type: String, index: true }],
     visibility: { type: String, enum: ['public', 'private', 'unlisted'], default: 'public' },
     isShort: { type: Boolean, default: false, index: true },
+    subtitles: [
+      {
+        language: { type: String, required: true },
+        url: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+    ],
   },
   { timestamps: true }
 );

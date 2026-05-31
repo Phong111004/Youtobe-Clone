@@ -125,3 +125,67 @@ export const addComment = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Like a comment
+// @route   POST /api/comments/like/:commentId
+// @access  Private
+export const likeComment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    const userId = (req as any).user._id;
+
+    if (!comment) {
+      res.status(404).json({ message: 'Comment not found' });
+      return;
+    }
+
+    const isLiked = comment.likes.includes(userId);
+    const isDisliked = comment.dislikes.includes(userId);
+
+    if (isLiked) {
+      comment.likes = comment.likes.filter((id) => id.toString() !== userId.toString());
+    } else {
+      comment.likes.push(userId);
+      if (isDisliked) {
+        comment.dislikes = comment.dislikes.filter((id) => id.toString() !== userId.toString());
+      }
+    }
+
+    await comment.save();
+    res.json({ likes: comment.likes.length, dislikes: comment.dislikes.length });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Dislike a comment
+// @route   POST /api/comments/dislike/:commentId
+// @access  Private
+export const dislikeComment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    const userId = (req as any).user._id;
+
+    if (!comment) {
+      res.status(404).json({ message: 'Comment not found' });
+      return;
+    }
+
+    const isLiked = comment.likes.includes(userId);
+    const isDisliked = comment.dislikes.includes(userId);
+
+    if (isDisliked) {
+      comment.dislikes = comment.dislikes.filter((id) => id.toString() !== userId.toString());
+    } else {
+      comment.dislikes.push(userId);
+      if (isLiked) {
+        comment.likes = comment.likes.filter((id) => id.toString() !== userId.toString());
+      }
+    }
+
+    await comment.save();
+    res.json({ likes: comment.likes.length, dislikes: comment.dislikes.length });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};

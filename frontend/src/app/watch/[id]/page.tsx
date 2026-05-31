@@ -6,8 +6,9 @@ import api from '@/services/api';
 import CustomVideoPlayer from '@/components/video-player/CustomVideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { ThumbsUp, ThumbsDown, Share2, Download, MoreHorizontal } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Share2, Download, MoreHorizontal, Sparkles, ListPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { aiApi } from '@/api/ai';
 import { useAuthStore } from '@/store/useAuthStore';
 import clsx from 'clsx';
 import CommentSection from '@/components/watch/CommentSection';
@@ -18,6 +19,25 @@ export default function WatchPage() {
   const [showFullDesc, setShowFullDesc] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const [summary, setSummary] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
+  const handleSummarize = async () => {
+    try {
+      setIsSummarizing(true);
+      const data = await aiApi.summarizeVideo(id as string);
+      setSummary(data);
+    } catch (err) {
+      alert('Không thể tóm tắt video. Vui lòng kiểm tra lại dịch vụ AI (Ollama).');
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const handleSaveToPlaylist = () => {
+    if (!user) return router.push('/login');
+    alert('Tính năng thêm vào danh sách phát đang được cập nhật giao diện.');
+  };
 
   const { data: video, isLoading, error } = useQuery({
     queryKey: ['video', id],
@@ -198,7 +218,7 @@ export default function WatchPage() {
       {/* Left Column (Main Video + Details) */}
       <div className="flex-1 lg:max-w-[70%]">
         <div className="rounded-xl overflow-hidden shadow-2xl bg-black">
-          <CustomVideoPlayer url={video.hlsUrl || video.videoUrl} />
+          <CustomVideoPlayer url={video.hlsUrl || video.videoUrl} videoId={video._id} />
         </div>
         
         <h1 className="text-xl font-bold mt-4 line-clamp-2">{video.title}</h1>
@@ -263,6 +283,21 @@ export default function WatchPage() {
               <Download className="w-5 h-5" />
               <span className="text-sm font-medium">Tải xuống</span>
             </button>
+            <button 
+              onClick={handleSummarize}
+              disabled={isSummarizing}
+              className="flex items-center gap-2 bg-[#272727] px-4 py-2 rounded-full hover:bg-[#3f3f3f] transition-colors"
+            >
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              <span className="text-sm font-medium">{isSummarizing ? 'Đang tóm tắt...' : 'AI Tóm tắt'}</span>
+            </button>
+            <button 
+              onClick={handleSaveToPlaylist}
+              className="flex items-center gap-2 bg-[#272727] px-4 py-2 rounded-full hover:bg-[#3f3f3f] transition-colors hidden sm:flex"
+            >
+              <ListPlus className="w-5 h-5" />
+              <span className="text-sm font-medium">Lưu</span>
+            </button>
             <button className="bg-[#272727] p-2.5 rounded-full hover:bg-[#3f3f3f] transition-colors">
               <MoreHorizontal className="w-5 h-5" />
             </button>
@@ -281,6 +316,15 @@ export default function WatchPage() {
             {showFullDesc ? 'Ẩn bớt' : 'Hiện thêm'}
           </button>
         </div>
+
+        {summary && (
+          <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/30 p-4 rounded-xl mt-4">
+            <h3 className="flex items-center gap-2 font-semibold text-purple-400 mb-2">
+              <Sparkles className="w-5 h-5" /> Tóm tắt bởi AI
+            </h3>
+            <p className="text-sm text-neutral-200 leading-relaxed">{summary}</p>
+          </div>
+        )}
 
         <CommentSection videoId={id as string} />
       </div>

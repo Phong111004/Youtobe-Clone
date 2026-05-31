@@ -1,21 +1,26 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, Settings } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Settings, Sparkles, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Hls from 'hls.js';
 
+import { aiApi } from '@/api/ai';
+
 interface CustomPlayerProps {
   url: string;
+  videoId?: string;
 }
 
-export default function CustomVideoPlayer({ url }: CustomPlayerProps) {
+export default function CustomVideoPlayer({ url, videoId }: CustomPlayerProps) {
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [played, setPlayed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -138,6 +143,21 @@ export default function CustomVideoPlayer({ url }: CustomPlayerProps) {
     }
   }, []);
 
+  const handleSummarize = async () => {
+    if (!videoId) return;
+    try {
+      setIsSummarizing(true);
+      setAiSummary(null);
+      const summary = await aiApi.summarizeVideo(videoId);
+      setAiSummary(summary);
+    } catch (error) {
+      console.error('Lỗi khi tóm tắt video:', error);
+      setAiSummary('Có lỗi xảy ra khi tóm tắt video. Vui lòng thử lại sau.');
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
   // HLS Setup
   useEffect(() => {
     const video = videoRef.current;
@@ -186,6 +206,42 @@ export default function CustomVideoPlayer({ url }: CustomPlayerProps) {
         onPause={() => setPlaying(false)}
         playsInline
       />
+
+      {/* AI Summary Overlay */}
+      <AnimatePresence>
+        {(aiSummary || isSummarizing) && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-4 left-4 right-4 z-30 p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 text-white max-h-[80%] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
+              <div className="flex items-center gap-2 text-blue-400 font-semibold">
+                <Sparkles className="w-5 h-5" />
+                <span>AI Tóm Tắt Video</span>
+              </div>
+              <button 
+                onClick={() => { setAiSummary(null); setIsSummarizing(false); }}
+                className="text-neutral-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {isSummarizing ? (
+              <div className="flex items-center gap-3 text-sm text-neutral-300">
+                <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+                Ollama (Gemma4) đang phân tích nội dung...
+              </div>
+            ) : (
+              <div className="text-sm leading-relaxed text-neutral-200 whitespace-pre-wrap">
+                {aiSummary}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Controls Overlay */}
       <AnimatePresence>
@@ -250,6 +306,16 @@ export default function CustomVideoPlayer({ url }: CustomPlayerProps) {
                 </div>
 
                 <div className="flex items-center gap-4">
+                  {videoId && (
+                    <button 
+                      onClick={handleSummarize}
+                      title="AI Tóm tắt video"
+                      className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 bg-blue-500/10 px-2 py-1 rounded-md"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span className="text-xs font-medium hidden sm:inline">AI Tóm tắt</span>
+                    </button>
+                  )}
                   <button className="text-white hover:text-neutral-300">
                     <Settings className="w-5 h-5" />
                   </button>

@@ -21,6 +21,7 @@ interface Comment {
   owner: CommentOwner;
   createdAt: string;
   likes: string[];
+  dislikes?: string[];
 }
 
 export default function CommentSection({ videoId }: { videoId: string }) {
@@ -53,6 +54,20 @@ export default function CommentSection({ videoId }: { videoId: string }) {
     e.preventDefault();
     if (!newComment.trim() || !user) return;
     postComment.mutate(newComment);
+  };
+
+  const handleLike = (commentId: string) => {
+    if (!user) return;
+    api.post(`/comments/like/${commentId}`).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
+    });
+  };
+
+  const handleDislike = (commentId: string) => {
+    if (!user) return;
+    api.post(`/comments/dislike/${commentId}`).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
+    });
   };
 
   return (
@@ -122,11 +137,23 @@ export default function CommentSection({ videoId }: { videoId: string }) {
                 </div>
                 <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-neutral-400">
-                  <button className="flex items-center gap-1 hover:text-white transition-colors">
+                  <button 
+                    onClick={() => handleLike(comment._id)}
+                    className={clsx(
+                      "flex items-center gap-1 hover:text-white transition-colors",
+                      user && comment.likes?.includes(user._id) ? "text-blue-400" : ""
+                    )}
+                  >
                     <ThumbsUp className="w-4 h-4" />
                     <span className="text-xs">{comment.likes?.length || 0}</span>
                   </button>
-                  <button className="hover:text-white transition-colors">
+                  <button 
+                    onClick={() => handleDislike(comment._id)}
+                    className={clsx(
+                      "hover:text-white transition-colors",
+                      user && comment.dislikes?.includes(user._id) ? "text-blue-400" : ""
+                    )}
+                  >
                     <ThumbsDown className="w-4 h-4" />
                   </button>
                   <button className="text-xs font-semibold hover:text-white transition-colors">

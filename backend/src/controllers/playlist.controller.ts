@@ -33,7 +33,7 @@ export const getMyPlaylists = async (req: Request, res: Response): Promise<void>
 // @access  Private
 export const createPlaylist = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, isPrivate } = req.body;
+    const { name, isPrivate, description } = req.body;
     const userId = (req as any).user._id;
 
     if (!name) {
@@ -43,6 +43,7 @@ export const createPlaylist = async (req: Request, res: Response): Promise<void>
 
     const playlist = await Playlist.create({
       name,
+      description: description || '',
       owner: userId,
       isPrivate: isPrivate ?? true,
       isWatchLater: false
