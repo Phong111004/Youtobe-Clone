@@ -1,23 +1,35 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import api from '@/services/api';
+import { playlistApi } from '@/api/playlist';
 import CustomVideoPlayer from '@/components/video-player/CustomVideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { ThumbsUp, ThumbsDown, Share2, Download, MoreHorizontal } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Share2, Download, MoreHorizontal, ListPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import clsx from 'clsx';
 import CommentSection from '@/components/watch/CommentSection';
+import SaveToPlaylistModal from '@/components/playlist/SaveToPlaylistModal';
 
 export default function WatchPage() {
   const { id } = useParams();
+  const searchParams = useSearchParams();
+  const listId = searchParams?.get('list');
   const router = useRouter();
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+
+  const { data: playlistData, isLoading: isPlaylistLoading } = useQuery({
+    queryKey: ['playlist', listId],
+    queryFn: () => playlistApi.getPlaylistById(listId as string),
+    enabled: !!listId,
+  });
 
   const { data: video, isLoading, error } = useQuery({
     queryKey: ['video', id],
@@ -263,6 +275,16 @@ export default function WatchPage() {
               <Download className="w-5 h-5" />
               <span className="text-sm font-medium">Tải xuống</span>
             </button>
+            <button 
+              onClick={() => {
+                if (!user) return router.push('/login');
+                setIsSaveModalOpen(true);
+              }}
+              className="flex items-center gap-2 bg-[#272727] px-4 py-2 rounded-full hover:bg-[#3f3f3f] transition-colors hidden sm:flex"
+            >
+              <ListPlus className="w-5 h-5" />
+              <span className="text-sm font-medium">Lưu</span>
+            </button>
             <button className="bg-[#272727] p-2.5 rounded-full hover:bg-[#3f3f3f] transition-colors">
               <MoreHorizontal className="w-5 h-5" />
             </button>
@@ -287,6 +309,41 @@ export default function WatchPage() {
 
       {/* Right Column (Related Videos) */}
       <div className="w-full lg:w-[30%] flex flex-col gap-3">
+        {listId && playlistData && (
+          <div className="bg-[#272727] rounded-xl overflow-hidden mb-4">
+            <div className="p-4 border-b border-[#3f3f3f]">
+              <h2 className="font-semibold text-lg line-clamp-1">{playlistData.name}</h2>
+              <p className="text-xs text-neutral-400 mt-1">{playlistData.owner.username}</p>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+              {playlistData.videos.map((vid: any, index: number) => {
+                const isActive = vid._id === id;
+                return (
+                  <Link 
+                    key={vid._id} 
+                    href={`/watch/${vid._id}?list=${listId}`}
+                    className={clsx(
+                      "flex gap-2 p-2 hover:bg-[#3f3f3f] transition-colors cursor-pointer",
+                      isActive ? "bg-[#3f3f3f]" : ""
+                    )}
+                  >
+                    <div className="text-xs text-neutral-400 w-4 flex items-center justify-center">
+                      {isActive ? '▶' : index + 1}
+                    </div>
+                    <div className="relative w-24 h-14 rounded-lg overflow-hidden shrink-0">
+                      <img src={vid.thumbnailUrl} alt={vid.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0 justify-center">
+                      <h4 className="text-sm font-medium line-clamp-2 leading-tight">{vid.title}</h4>
+                      <p className="text-xs text-neutral-400 mt-1">{vid.owner?.username}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {isRelatedLoading ? (
           <p className="text-neutral-400 text-sm">Đang tải video liên quan...</p>
         ) : (
@@ -304,6 +361,12 @@ export default function WatchPage() {
           ))
         )}
       </div>
+
+      <SaveToPlaylistModal 
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        videoId={id as string}
+      />
     </div>
   );
 }

@@ -48,7 +48,7 @@ export default function PlaylistsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {playlists?.map((playlist: any) => (
-            <div key={playlist._id} className="group relative">
+            <Link key={playlist._id} href={`/playlists/${playlist._id}`} className="group relative block">
               <div className="aspect-video bg-neutral-800 rounded-xl overflow-hidden relative border border-neutral-800 hover:border-neutral-600 transition-colors">
                 {/* Playlist Thumbnail (Mock) */}
                 <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a]">
@@ -78,7 +78,7 @@ export default function PlaylistsPage() {
                   <span>{playlist.isPrivate ? 'Riêng tư' : 'Công khai'}</span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

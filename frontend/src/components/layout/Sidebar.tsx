@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, PlaySquare, Clock, ThumbsUp, History, PlayCircle, Flame } from 'lucide-react';
+import { Home, Compass, PlaySquare, Clock, ThumbsUp, History, PlayCircle, Flame, ListVideo } from 'lucide-react';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import clsx from 'clsx';
 
@@ -15,6 +15,7 @@ const mainLinks = [
 const secondaryLinks = [
   { name: 'Thư viện', icon: Compass, path: '/library' },
   { name: 'Video đã xem', icon: History, path: '/history' },
+  { name: 'Danh sách phát', icon: ListVideo, path: '/playlists' },
   { name: 'Video của bạn', icon: PlaySquare, path: '/channel/me' },
   { name: 'Xem sau', icon: Clock, path: '/watch-later' },
   { name: 'Video đã thích', icon: ThumbsUp, path: '/liked' },
