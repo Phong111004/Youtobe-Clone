@@ -6,13 +6,15 @@ import VideoCard from '@/components/common/VideoCard';
 import VideoSkeleton from '@/components/common/VideoSkeleton';
 import { useInView } from 'react-intersection-observer';
 import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, usePathname } from 'next/navigation'; // ✅ Thêm usePathname
+import Link from 'next/link'; // ✅ Thêm Link
 import { useAuthStore } from '@/store/useAuthStore';
 import clsx from 'clsx';
 import React from 'react';
 
 export default function ChannelPage() {
   const { id } = useParams();
+  const pathname = usePathname(); // ✅ Thêm biến pathname
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -156,12 +158,55 @@ export default function ChannelPage() {
           </div>
         </div>
 
-        {/* Channel Tabs */}
+        {/* Channel Tabs - ĐÃ SỬA */}
         <div className="flex gap-8 border-b border-neutral-800 mb-6">
-          <button className="py-3 text-white border-b-2 border-white font-medium">Trang chủ</button>
-          <button className="py-3 text-neutral-400 hover:text-white font-medium">Video</button>
-          <button className="py-3 text-neutral-400 hover:text-white font-medium">Danh sách phát</button>
-          <button className="py-3 text-neutral-400 hover:text-white font-medium">Cộng đồng</button>
+          <Link 
+            href={`/channel/${id}`}
+            className={clsx(
+              "py-3 font-medium transition-colors",
+              !pathname?.includes('/videos') && !pathname?.includes('/playlists') && !pathname?.includes('/community')
+                ? "text-white border-b-2 border-white" 
+                : "text-neutral-400 hover:text-white"
+            )}
+          >
+            Trang chủ
+          </Link>
+          
+          <Link 
+            href={`/channel/${id}/videos`}
+            className={clsx(
+              "py-3 font-medium transition-colors",
+              pathname?.includes('/videos')
+                ? "text-white border-b-2 border-white" 
+                : "text-neutral-400 hover:text-white"
+            )}
+          >
+            Video
+          </Link>
+          
+          <Link 
+            href={`/channel/${id}/playlists`}
+            className={clsx(
+              "py-3 font-medium transition-colors",
+              pathname?.includes('/playlists')
+                ? "text-white border-b-2 border-white" 
+                : "text-neutral-400 hover:text-white"
+            )}
+          >
+            Danh sách phát
+          </Link>
+          
+          <Link 
+            href={`/channel/${id}/community`}
+            className={clsx(
+              "py-3 font-medium transition-colors",
+              pathname?.includes('/community')
+                ? "text-white border-b-2 border-white" 
+                : "text-neutral-400 hover:text-white"
+            )}
+          >
+            Cộng đồng
+          </Link>
         </div>
 
         {/* Video Grid */}

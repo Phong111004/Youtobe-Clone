@@ -14,8 +14,10 @@ import notificationRoutes from './routes/notification.routes';
 import studioRoutes from './routes/studio.routes';
 import adminRoutes from './routes/admin.routes';
 import aiRoutes from './routes/ai.routes';
+import communityRoutes from './routes/community.routes';
 import { createServer } from 'http';
 import { initSocket } from './socket';
+
 
 // Load environment variables
 dotenv.config();
@@ -56,7 +58,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/studio', studioRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
-
+app.use('/api/community', communityRoutes); // ⭐ THÊM DÒNG NÀY
 // Port configuration
 const PORT = process.env.PORT || 5000;
 
